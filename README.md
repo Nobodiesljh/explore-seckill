@@ -19,7 +19,7 @@
 
 1）除MySQL外，所有的网页、中间件等都部署在本地win10电脑，配置如下
 
-![3](C:\Users\93672\Desktop\blog\blogs-documents\初探高并发编程：秒杀系统\3.PNG)
+![](http://qiniu.trajectories.cn/seckill_3.PNG)
 
 2）MySQL5.7 部署在了本地的centos7虚拟机上
 
@@ -37,13 +37,13 @@
 
 利用Service->Controller->Dao的结构，把原本静态的商品购买页面，用从数据库中读取各个商品的数据进行填充，实现不同商品信息的动态查询展示。此时的项目结构如下图
 
-![1](C:\Users\93672\Desktop\blog\blogs-documents\初探高并发编程：秒杀系统\1.PNG)
+![](http://qiniu.trajectories.cn/seckill_1.PNG)
 
 
 
 #### 5. 第一次JMeter压测：仅测试访问商品的信息页面
 
-![2](C:\Users\93672\Desktop\blog\blogs-documents\初探高并发编程：秒杀系统\2.PNG)
+![](http://qiniu.trajectories.cn/seckill_2.PNG)
 
 - 吞吐量每秒83.1次
 
