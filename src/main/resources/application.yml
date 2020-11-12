@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://100.68.42.91:3306/babytun?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: root
+    password: 1
+
+mybatis:
+  mapper-locations: classpath:/mapper/*.xml
+  configuration:
+    #自动的命名驼峰转换
+    map-underscore-to-camel-case: true
