@@ -13,6 +13,9 @@
 - MyBatis
 - Freemarker
 - Redis 5.0.3
+- swagger2.0
+
+本项目的所有接口api可以查看：http://.../swagger-ui.html
 
 
 
