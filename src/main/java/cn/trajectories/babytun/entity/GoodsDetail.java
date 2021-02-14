@@ -1,6 +1,8 @@
 package cn.trajectories.babytun.entity;
 
-public class GoodsDetail {
+import java.io.Serializable;
+
+public class GoodsDetail implements Serializable {
 
     private Long gdId;
     private Long goodsId;
