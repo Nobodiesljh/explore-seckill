@@ -2,6 +2,7 @@ package cn.trajectories.babytun.controller;
 
 import cn.trajectories.babytun.entity.Goods;
 import cn.trajectories.babytun.service.GoodsService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Controller;
@@ -13,6 +14,7 @@ import javax.annotation.Resource;
 
 
 @Controller
+@Api(tags = "商品信息展示")
 public class GoodsController {
 
     @Resource

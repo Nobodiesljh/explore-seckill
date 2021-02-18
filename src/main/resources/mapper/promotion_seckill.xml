@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.trajectories.babytun.dao.PromotionSecKillDao">
+    <select id="findUnstartSecKill"  resultType="cn.trajectories.babytun.entity.PromotionSecKill">
+        select * from t_promotion_seckill where now() BETWEEN start_time AND end_time and status = 0;
+    </select>
+
+    <update id="update" parameterType="cn.trajectories.babytun.entity.PromotionSecKill">
+        update t_promotion_seckill set goods_id = #{goodsId}, ps_count = #{psCount},
+        start_time = #{startTime}, end_time = #{endTime}, status = #{status},
+        current_price = #{currentPrice} where ps_id = #{psId};
+    </update>
+
+    <update id="updateCountByGoodsId" parameterType="java.lang.Long">
+        update t_promotion_seckill set ps_count = 100 where goods_id = #{goodsId};
+    </update>
+
+    <select id="selectCountByGoodsId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        select ps_count from t_promotion_seckill where goods_id = #{goodsId};
+    </select>
+
+    <update id="reduceStockByGoodsId" parameterType="java.util.Map">
+        update t_promotion_seckill set ps_count = #{psCount} where goods_id = #{goodsId};
+    </update>
+</mapper>
