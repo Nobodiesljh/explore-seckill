@@ -46,7 +46,7 @@ public class SecKillNotDistributeController {
 
         final long killId = gid;
         logger.info("case1:不加锁,出现超卖现象");
-        // 模拟10个用户在秒杀
+        // 模拟skillNum个用户在秒杀
         for(int i = 0; i < skillNum; i++){
             final long userId = i;
             Runnable task = () -> {
@@ -72,6 +72,44 @@ public class SecKillNotDistributeController {
             logger.error("秒杀系统出错", e);
         }
         return JsonRespDTO.fail("会存在超卖现象");
+    }
+
+    @ApiOperation(value = "case2:加ReentrantLock,正常")
+    @GetMapping("/handleWithLock")
+    public JsonRespDTO handleWithLock(long gid) {
+        int skillNum = 56;
+        final CountDownLatch latch = new CountDownLatch(skillNum);
+        // 数据库中的商品、秒杀信息初始化
+        secKillService.initializeSecKill(gid);
+
+        final long killId = gid;
+        logger.info("case2:加ReentrantLock,正常");
+        // 模拟skillNum个用户在秒杀
+        for(int i = 0; i < skillNum; i++){
+            final long userId = i;
+            Runnable task = () -> {
+                try{
+                    JsonRespDTO result = secKillService.handleSecKillWithLock(killId, userId);
+                    if(null != result){
+                        logger.info("用户:{}{}",userId,result.getMessage());
+                    }else{
+                        logger.info("用户:{}{}",userId,"抢购火爆,请稍后！");
+                    }
+                }catch (Exception e){
+                    logger.error("秒杀系统出错", e);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await(); // 等待所有人任务结束
+            long killedCount = secKillService.getKilledCount(gid);
+            logger.info("一共秒杀出{}件商品",killedCount);
+        } catch (Exception e) {
+            logger.error("秒杀系统出错", e);
+        }
+        return JsonRespDTO.success("秒杀正常");
     }
 
 }

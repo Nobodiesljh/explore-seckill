@@ -13,16 +13,20 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service("secKillNDService")
 @Primary
 public class SecKillNDServiceImpl implements ISecKillNDService {
 
     private final static Logger logger = LoggerFactory.getLogger(SecKillNDServiceImpl.class);
+
+    // 选用公平锁,因为是需要先到先得
+    private Lock lock = new ReentrantLock(true);
 
     @Autowired(required = false)
     private PromotionSecKillDao promotionSecKillDao;
@@ -86,6 +90,21 @@ public class SecKillNDServiceImpl implements ISecKillNDService {
         return result;
     }
 
-
-
+    @Override
+    public JsonRespDTO handleSecKillWithLock(long goodsId, long userId) {
+        // 这里注意要用锁把整个事务都包裹起来，不然会出现超卖现象
+        // 小柒2012/spring-boot-seckill源代码中目前还没有做修改，会存在超卖
+        lock.lock();
+        JsonRespDTO result = new JsonRespDTO();
+        try {
+            result = this.handleSecKill(goodsId, userId);
+        } catch (Exception e) {
+            logger.error("秒杀异常", e);
+            result.setMessage("秒杀系统出现异常");
+            result.setStatus(JsonRespDTO.STATUS_ERROR);
+        }finally {
+            lock.unlock();
+        }
+        return result;
+    }
 }

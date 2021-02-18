@@ -94,7 +94,7 @@ JMeter的参数设置见JMeter文件夹
 #### 0. 准备
 1）为了方便，准备了一张静态页面来作为秒杀商品:static/seckill.html
 
-2）注意数据库中的 t_promotion_seckill 秒杀信息表; t_success_killed 渺少成功表
+2）注意数据库中的 t_promotion_seckill 秒杀信息表; t_success_killed 秒杀成功表
 
 3）加入秒杀使用的entity、mapper、dao等
 
@@ -107,5 +107,13 @@ JMeter的参数设置见JMeter文件夹
 
 可以从t_success_killed表中秒杀订单数量 与 t_promotion_seckill表中商品的剩余数量可以看出，出现了超卖
 
-#### 2. case2: 
+#### 2. case2: 加ReentrantLock,秒杀正常
+接口：/seckill/handleWithLock?gid=1197
 
+这里在ReentrantLock和synchronized中选择ReentrantLock，主要是因为synchronized是非公平锁，而ReentrantLock能选择公平与非公平。这里秒杀是要先到先得，因此设置为公平锁
+
+这里注意要用锁把整个事务都包裹起来，不然会出现超卖现象
+
+小柒2012/spring-boot-seckill源代码中目前还没有做修改，会存在超卖
+
+#### 3. case3: 

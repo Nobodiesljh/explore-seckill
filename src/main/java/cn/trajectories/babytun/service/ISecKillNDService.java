@@ -25,5 +25,11 @@ public interface ISecKillNDService {
      */
     JsonRespDTO handleSecKill(long killId, long userId);
 
-
+    /**
+     * case2:加ReentrantLock,正常
+     * @param killId
+     * @param userId
+     * @return
+     */
+    JsonRespDTO handleSecKillWithLock(long killId, long userId);
 }
