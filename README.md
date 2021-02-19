@@ -112,8 +112,14 @@ JMeter的参数设置见JMeter文件夹
 
 这里在ReentrantLock和synchronized中选择ReentrantLock，主要是因为synchronized是非公平锁，而ReentrantLock能选择公平与非公平。这里秒杀是要先到先得，因此设置为公平锁
 
-这里注意要用锁把整个事务都包裹起来，不然会出现超卖现象
+这里注意要用锁把整个事务都包裹起来，不然会因为事务还没提交就把锁资源释放而出现的超卖现象
 
-小柒2012/spring-boot-seckill源代码中目前还没有做修改，会存在超卖
+小柒2012/spring-boot-seckill项目中保留了出现超卖现象的代码块，并且提供一种利用自定义注解来解决bug的方法，见下面的case
 
-#### 3. case3: 
+#### 3. case3: 自定义注解+AOP,正常
+
+[从构建分布式秒杀系统聊聊Lock锁使用中的坑](https://blog.52itstyle.vip/archives/2952/)
+ 
+ 自定义@ServiceLock注解，并自定义LockAspect切面，切给注解，实现一个加锁的操作
+ 
+ #### 4. case4: 

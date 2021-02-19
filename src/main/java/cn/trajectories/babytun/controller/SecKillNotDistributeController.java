@@ -112,4 +112,42 @@ public class SecKillNotDistributeController {
         return JsonRespDTO.success("秒杀正常");
     }
 
+    @ApiOperation(value = "case3:自定义加ReentrantLock的注解,正常")
+    @GetMapping("/handleWithAop")
+    public JsonRespDTO handleWithAop(long gid) {
+        int skillNum = 71;
+        final CountDownLatch latch = new CountDownLatch(skillNum);
+        // 数据库中的商品、秒杀信息初始化
+        secKillService.initializeSecKill(gid);
+
+        final long killId = gid;
+        logger.info("case3:自定义加ReentrantLock的注解,正常");
+        // 模拟skillNum个用户在秒杀
+        for(int i = 0; i < skillNum; i++){
+            final long userId = i;
+            Runnable task = () -> {
+                try{
+                    JsonRespDTO result = secKillService.handleSecKillWithAopLock(killId, userId);
+                    if(null != result){
+                        logger.info("用户:{}{}",userId,result.getMessage());
+                    }else{
+                        logger.info("用户:{}{}",userId,"抢购火爆,请稍后！");
+                    }
+                }catch (Exception e){
+                    logger.error("秒杀系统出错", e);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await(); // 等待所有人任务结束
+            long killedCount = secKillService.getKilledCount(gid);
+            logger.info("一共秒杀出{}件商品",killedCount);
+        } catch (Exception e) {
+            logger.error("秒杀系统出错", e);
+        }
+        return JsonRespDTO.success("秒杀正常");
+    }
+
 }
