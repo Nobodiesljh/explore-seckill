@@ -1,4 +1,4 @@
-# 初探高并发编程：秒杀系统
+# 初探并发编程：秒杀系统
 
 这里是个人尝试通过秒杀系统学习并发编程知识的一个小项目。希望能够对您有帮助。
 
@@ -92,7 +92,7 @@ JMeter的参数设置见JMeter文件夹
 ## 三、(单机)秒杀系统 feature/seckillNotDistribute分支
 
 ### 0. 准备
-1）为了方便，准备了一张静态页面来作为秒杀商品:static/seckill.html
+1）准备了一张静态页面来作为秒杀商品:static/seckill.html。如果需要前端页面和后端联合起来，只需修改页面一部分html页面即可，给抢购按钮绑定单击事件等，这里就不赘述了
 
 2）注意数据库中的 t_promotion_seckill 秒杀信息表; t_success_killed 秒杀成功表
 
