@@ -10,6 +10,7 @@ public class PromotionSecKill {
     private Date endTime;
     private Integer status;
     private Float currentPrice;
+    private Long version;
 
     public Long getPsId() {
         return psId;
@@ -65,5 +66,13 @@ public class PromotionSecKill {
 
     public void setCurrentPrice(Float currentPrice) {
         this.currentPrice = currentPrice;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

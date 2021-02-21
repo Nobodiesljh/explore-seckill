@@ -15,4 +15,12 @@ public interface PromotionSecKillDao {
     long selectCountByGoodsId(long goodsId);
 
     void reduceStockByGoodsId(Map<String, Long> data);
+
+    long selectCountByGoodsIdPcc(long goodsId);
+
+    int reduceByGoodsId(long goodsId);
+
+    int reduceStockByOcc(Map<String, Long> data);
+
+    PromotionSecKill selectGoodByGoodsId(long goodsId);
 }

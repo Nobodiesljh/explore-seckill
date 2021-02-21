@@ -120,6 +120,42 @@ JMeter的参数设置见JMeter文件夹
 
 [从构建分布式秒杀系统聊聊Lock锁使用中的坑](https://blog.52itstyle.vip/archives/2952/)
  
+ 接口：/seckill/handleWithAop?gid=1197
+ 
  自定义@ServiceLock注解，并自定义LockAspect切面，切给注解，实现一个加锁的操作
  
- #### 4. case4: 
+ #### 4. case4: 数据库悲观锁(查询加锁),正常
+ 接口：/seckill/handleWithPccOne?gid=1197
+ 
+ 这里对查询语句添加for update关键字来加排他锁，实现数据库悲观锁
+ 
+ ```mysql
+select ps_count from t_promotion_seckill where goods_id = #{goodsId} for update;
+```
+当一个请求A开启事务并执行此sql同时未提交事务时，另一个线程B发起请求，此时B将阻塞在加了锁的查询语句上，直到A请求的事务提交或者回滚，B才会继续执行，保证了访问的隔离性。
+
+#### 5. case5: 数据库悲观锁(更新加锁),正常
+接口：/seckill/handleWithPccTwo?gid=1197
+
+这里应用mysql数据库本身的特性，即对于UPDATE、DELETE、INSERT语句，InnoDB会自动将涉及的数据集添加排他锁(X锁)。将update商品数量的sql语句上移，并用update操作后返回的结果来判断是否更新成功，来实现数据库悲观锁
+
+#### 6. case6: 数据库乐观锁，正常
+接口：/seckill/handleWithOcc?gid=1197
+
+利用数据库乐观锁，给秒杀商品信息添加了一个version版本号的字段，来进行版本号的更新。一些用户会因为乐观锁的原因，而被告知下单失败，需要用户再重复操作。
+
+如果秒杀用户比较少的时候，可能会出现少买现象，就是还会剩余一些商品没有被成功卖出去。
+
+#### 7. case7: JDK内置阻塞队列，正常
+
+接口：/seckill/handleWithBlockingQueue?gid=1197
+
+BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设置成全局使用，并保证一个类只有一个实例，哪怕是多线程同时访问，还需要提供一个全局访问此实例的点。因此，这里使用到了**单例模式**实现
+
+这里SecKillQueue的单例模式是使用类的静态内部类的写法实现的，既保证了线程安全也保证了懒加载，同时也没有加锁的耗费性能的情况。主要是依靠JVM虚拟机可以保证多线程并发访问的正确性，也就是一个类的构造方法在多线程环境下可以被正确的加载
+
+生产：利用JDK自带的线程安全的阻塞队列LinkedBlockingQueue实现，将秒杀信息添加到阻塞队列中，等待被消费
+
+消费：编写一个实现了ApplicationRunner的启动加载类：BlockingQueueConsumer。项目启动完成后，当有秒杀信息传入阻塞队列时，取出信息消费，进行秒杀处理。这里使用串行消费，所以直接调用没有加锁的方法就可以
+
+注：小柒2012/spring-boot-seckill项目中另外提供了一种利用高性能队列Disruptor实现的接口。实现的原理差不多，这里就不赘述了

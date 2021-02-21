@@ -13,14 +13,31 @@
     </update>
 
     <update id="updateCountByGoodsId" parameterType="java.lang.Long">
-        update t_promotion_seckill set ps_count = 100 where goods_id = #{goodsId};
+        update t_promotion_seckill set ps_count = 100, version = 0 where goods_id = #{goodsId};
     </update>
 
     <select id="selectCountByGoodsId" parameterType="java.lang.Long" resultType="java.lang.Long">
         select ps_count from t_promotion_seckill where goods_id = #{goodsId};
     </select>
 
+    <select id="selectCountByGoodsIdPcc" parameterType="java.lang.Long" resultType="java.lang.Long">
+        select ps_count from t_promotion_seckill where goods_id = #{goodsId} for update;
+    </select>
+
     <update id="reduceStockByGoodsId" parameterType="java.util.Map">
         update t_promotion_seckill set ps_count = #{psCount} where goods_id = #{goodsId};
     </update>
+
+    <update id="reduceByGoodsId" parameterType="java.lang.Long">
+        update t_promotion_seckill set ps_count = ps_count-1 where ps_count>0 and goods_id = #{goodsId};
+    </update>
+
+    <update id="reduceStockByOcc" parameterType="java.util.Map">
+        update t_promotion_seckill set ps_count = ps_count-#{num}, version = version+1
+        where version = #{version} and goods_id = #{goodsId};
+    </update>
+
+    <select id="selectGoodByGoodsId" parameterType="java.lang.Long" resultType="cn.trajectories.babytun.entity.PromotionSecKill">
+        select * from t_promotion_seckill where goods_id = #{goodsId};
+    </select>
 </mapper>
