@@ -100,14 +100,14 @@ JMeter的参数设置见JMeter文件夹
 
 4）使用任务调度，实现项目启动时，开启秒杀活动，即将秒杀信息表中的status置为开启
 
-### 1. case1：不加锁,出现超卖现象
+### 1. case1:不加锁,出现超卖现象
 接口：/seckill/handle?gid=1197
 
 接口内模拟了skillNum个用户进行秒杀，观察控制台日志输出的信息。
 
 可以从t_success_killed表中秒杀订单数量 与 t_promotion_seckill表中商品的剩余数量可以看出，出现了超卖
 
-### 2. case2: 加ReentrantLock,秒杀正常
+### 2. case2:加ReentrantLock,秒杀正常
 接口：/seckill/handleWithLock?gid=1197
 
 这里在ReentrantLock和synchronized中选择ReentrantLock，主要是因为synchronized是非公平锁，而ReentrantLock能选择公平与非公平。这里秒杀是要先到先得，因此设置为公平锁
@@ -116,7 +116,7 @@ JMeter的参数设置见JMeter文件夹
 
 小柒2012/spring-boot-seckill项目中保留了出现超卖现象的代码块，并且提供一种利用自定义注解来解决bug的方法，见下面的case
 
-### 3. case3: 自定义注解+AOP,正常
+### 3. case3:自定义注解+AOP,正常
 
 [从构建分布式秒杀系统聊聊Lock锁使用中的坑](https://blog.52itstyle.vip/archives/2952/)
  
@@ -124,7 +124,7 @@ JMeter的参数设置见JMeter文件夹
  
  自定义@ServiceLock注解，并自定义LockAspect切面，切给注解，实现一个加锁的操作
  
-### 4. case4: 数据库悲观锁(查询加锁),正常
+### 4. case4:数据库悲观锁(查询加锁),正常
  接口：/seckill/handleWithPccOne?gid=1197
  
  这里对查询语句添加for update关键字来加排他锁，实现数据库悲观锁
@@ -134,19 +134,19 @@ select ps_count from t_promotion_seckill where goods_id = #{goodsId} for update;
 ```
 当一个请求A开启事务并执行此sql同时未提交事务时，另一个线程B发起请求，此时B将阻塞在加了锁的查询语句上，直到A请求的事务提交或者回滚，B才会继续执行，保证了访问的隔离性。
 
-### 5. case5: 数据库悲观锁(更新加锁),正常
+### 5. case5:数据库悲观锁(更新加锁),正常
 接口：/seckill/handleWithPccTwo?gid=1197
 
 这里应用mysql数据库本身的特性，即对于UPDATE、DELETE、INSERT语句，InnoDB会自动将涉及的数据集添加排他锁(X锁)。将update商品数量的sql语句上移，并用update操作后返回的结果来判断是否更新成功，来实现数据库悲观锁
 
-### 6. case6: 数据库乐观锁，正常
+### 6. case6:数据库乐观锁，正常
 接口：/seckill/handleWithOcc?gid=1197
 
 利用数据库乐观锁，给秒杀商品信息添加了一个version版本号的字段，来进行版本号的更新。一些用户会因为乐观锁的原因，而被告知下单失败，需要用户再重复操作。
 
 如果秒杀用户比较少的时候，可能会出现少买现象，就是还会剩余一些商品没有被成功卖出去。
 
-### 7. case7: JDK内置阻塞队列，正常
+### 7. case7:JDK内置阻塞队列，正常
 
 接口：/seckill/handleWithBlockingQueue?gid=1197
 
@@ -159,3 +159,16 @@ BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设�
 消费：编写一个实现了ApplicationRunner的启动加载类：BlockingQueueConsumer。项目启动完成后，当有秒杀信息传入阻塞队列时，取出信息消费，进行秒杀处理。这里使用串行消费，所以直接调用没有加锁的方法就可以
 
 注：小柒2012/spring-boot-seckill项目中另外提供了一种利用高性能队列Disruptor实现的接口。实现的原理差不多，这里就不赘述了
+
+## 四、分布式秒杀系统 feature/seckillDistribute分支
+
+### 0. 准备
+
+1）搭建三主三从Cluster模式的Redis集群,配置Redisson
+
+
+### 1. case1:基于Redisson的分布式锁，正常
+
+接口：/seckillDistributed/handleWithRedisson?gid=1197
+
+注意要用Redis Lock把整个事务提交都包住。这里仅仅使用了Redis分布式提供的锁功能，秒杀数据处理还是直接访问数据库来完成
