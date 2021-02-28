@@ -8,6 +8,8 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +39,8 @@ public class SecKillDistributeController {
     private ISecKillNDService secKillService;
     @Autowired
     private ISecKillDistributeService secKillDistributeService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @ApiOperation(value = "case1:基于Redisson的分布式锁，正常")
@@ -149,7 +153,53 @@ public class SecKillDistributeController {
             latch.await(); // 等待所有人任务结束
 
             // 秒杀结束后，将Redis中秒杀信息写入到数据库中进行保存
-            secKillDistributeService.updateDateBaseFromRedis(gid);
+            secKillDistributeService.updateDateBaseFromRedis(gid, "list");
+
+            long killedCount = secKillService.getKilledCount(gid);
+            logger.info("一共秒杀出{}件商品",killedCount);
+        } catch (Exception e) {
+            logger.error("秒杀系统出错", e);
+        }
+        return JsonRespDTO.success("秒杀系统正常");
+    }
+
+    @ApiOperation(value = "case4:Redis原子递减,正常")
+    @GetMapping("/handleWithRedisIncr")
+    public JsonRespDTO handleWithRedisIncr(long gid) {
+        int skillNum = 34;
+        final CountDownLatch latch = new CountDownLatch(skillNum);
+        // 数据库中的商品、秒杀信息初始化
+        secKillService.initializeSecKill(gid);
+        // 初始化Redis中商品个数
+        secKillDistributeService.initializeRedis(gid);
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        valueOps.set("seckill:value:" + gid + "-num", 100 + "");
+
+        final long killId = gid;
+        logger.info("case4:Redis原子递减,正常");
+        // 模拟skillNum个用户在秒杀
+        for (int i = 0; i < skillNum; i++) {
+            final long userId = i;
+            Runnable task = () -> {
+                try {
+                    JsonRespDTO result = secKillDistributeService.handleWithRedisIncr(killId, userId);
+                    if (null != result) {
+                        logger.info("用户:{}{}", userId, result.getMessage());
+                    } else {
+                        logger.info("用户:{}{}", userId, "抢购火爆,请稍后！");
+                    }
+                }catch (Exception e){
+                    logger.error("秒杀系统出错", e);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await(); // 等待所有人任务结束
+
+            // 秒杀结束后，将Redis中秒杀信息写入到数据库中进行保存
+            secKillDistributeService.updateDateBaseFromRedis(gid, "incr");
 
             long killedCount = secKillService.getKilledCount(gid);
             logger.info("一共秒杀出{}件商品",killedCount);

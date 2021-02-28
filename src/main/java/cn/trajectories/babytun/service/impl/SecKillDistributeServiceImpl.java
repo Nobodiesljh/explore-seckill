@@ -43,6 +43,7 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
         // 删掉以前重复的活动任务
         stringRedisTemplate.delete("seckill:count:" + ps.getGoodsId());
         stringRedisTemplate.delete("seckill:users" + ps.getGoodsId());
+        stringRedisTemplate.delete("seckill:value:" + gid + "-num");
         // 有几件库存商品，则初始化几个list对象
         for (int i = 0; i < ps.getPsCount(); i++) {
             stringRedisTemplate.opsForList().rightPush("seckill:count:" + ps.getGoodsId(), ps.getPsId() + "");
@@ -50,9 +51,15 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
     }
 
     @Override
-    public void updateDateBaseFromRedis(long goodsId) {
+    public void updateDateBaseFromRedis(long goodsId, String flag) {
         try {
-            Long size = stringRedisTemplate.opsForList().size("seckill:count:" + goodsId);
+            Long size = 0l;
+            if ("list".equals(flag)) {
+                size = stringRedisTemplate.opsForList().size("seckill:count:" + goodsId);
+            } else if ("incr".equals(flag)) {
+                String s = stringRedisTemplate.opsForValue().get("seckill:value:" + goodsId + "-num");
+                size = Long.parseLong(s) >= 0 ? Long.parseLong(s) : 0;
+            }
             // 1.扣库存
             Map<String, Long> data = new HashMap<>();
             data.put("psCount", size);
@@ -174,6 +181,28 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
                     result.setMessage("抱歉，商品已抢光");
                     result.setStatus(JsonRespDTO.STATUS_FAILURE);
                 }
+            } else {
+                result.setMessage("库存不够了");
+                result.setStatus(JsonRespDTO.STATUS_FAILURE);
+            }
+        } catch (Exception e) {
+            logger.error("秒杀异常", e);
+            result.setMessage("秒杀系统出现异常");
+            result.setStatus(JsonRespDTO.STATUS_ERROR);
+        }
+        return result;
+    }
+
+    @Override
+    public JsonRespDTO handleWithRedisIncr(long goodsId, long userId) {
+        JsonRespDTO result = new JsonRespDTO();
+        try {
+            // 扣库存
+            Long psCount = stringRedisTemplate.opsForValue().increment("seckill:value:" + goodsId + "-num", -1);
+            // 校验库存
+            if (psCount >= 0) {
+                stringRedisTemplate.opsForSet().add("seckill:users" + goodsId, userId + "");
+                result.setMessage("下单成功");
             } else {
                 result.setMessage("库存不够了");
                 result.setStatus(JsonRespDTO.STATUS_FAILURE);

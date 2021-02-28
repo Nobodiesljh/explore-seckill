@@ -13,7 +13,7 @@ public interface ISecKillDistributeService {
     /**
      * 秒杀结束后，将Redis中秒杀信息写入到数据库中进行保存
      */
-    void updateDateBaseFromRedis(long gid);
+    void updateDateBaseFromRedis(long gid, String flag);
 
     /**
      * 不加锁，最原始的处理
@@ -48,4 +48,11 @@ public interface ISecKillDistributeService {
      */
     JsonRespDTO handleWithRedisList(long killId, long userId);
 
+    /**
+     * case4:Redis原子递减,正常
+     * @param killId
+     * @param userId
+     * @return
+     */
+    JsonRespDTO handleWithRedisIncr(long killId, long userId);
 }

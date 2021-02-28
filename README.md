@@ -183,9 +183,9 @@ BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设�
 
 注意这里也要用Zookeeper分布式锁把整个事务提交都包住。这里只用了zookeeper的分布式锁功能，秒杀数据处理也是直接访问数据库来完成
 
-### 3. case3:Redis分布式队列-订阅消费，正常
+### 3. case3:Redis的List队列，正常
 
-接口：
+接口：/seckillDistributed/handleWithRedisList?gid=1197
 
 这里利用Redis队列的方法，与 小柒2012/spring-boot-seckill 中的略有不同，在小柒2012/spring-boot-seckill项目中，是将在前端进行秒杀的用户的信息传入到通道中，等待被消费。后端订阅监听这个通道，有秒杀用户信息传过来就进行消费处理，再将处理数据写入到数据库。
 
@@ -193,3 +193,15 @@ BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设�
 
 ![](pic/seckill_6.PNG)
 
+### 4. case4:Redis原子递减,正常
+
+接口：/seckillDistributed/handleWithRedisIncr?gid=1197
+
+这里先将秒杀商品的库存数量，写入到redis中，利用redis的incr来实现原子递减。假如有100件商品，这里相当于准备好了100个钥匙，有人没有抢到钥匙，就返回库存不够，有人抢到了钥匙，就进行下一步处理，先将秒杀订单的信息写入到redis中，等空闲下来后在写入到数据库中。这里其实与case3差不多
+
+### 5. 其他
+以下几种方法这里就不赘述了
+
+1）基于Redis的任务队列，订阅监听
+
+2）基于MQ消息队列的分布式锁
