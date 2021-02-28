@@ -115,6 +115,48 @@ public class SecKillDistributeController {
         return JsonRespDTO.success("秒杀系统正常");
     }
 
+    @ApiOperation(value = "case3:Redis分布式队列-订阅消费,正常")
+    @GetMapping("/handleWithRedisList")
+    public JsonRespDTO handleWithRedisList(long gid) {
+        int skillNum = 56;
+        final CountDownLatch latch = new CountDownLatch(skillNum);
+        // 数据库中的商品、秒杀信息初始化
+        secKillService.initializeSecKill(gid);
+        // 初始化Redis中秒杀的库存信息
+        secKillDistributeService.initializeRedis(gid);
 
+        final long killId = gid;
+        logger.info("case3:Redis分布式队列-订阅消费,正常");
+        // 模拟skillNum个用户在秒杀
+        for(int i = 0; i < skillNum; i++){
+            final long userId = i;
+            Runnable task = () -> {
+                try{
+                    JsonRespDTO result = secKillDistributeService.handleWithRedisList(killId, userId);
+                    if(null != result){
+                        logger.info("用户:{}{}",userId,result.getMessage());
+                    }else{
+                        logger.info("用户:{}{}",userId,"抢购火爆,请稍后！");
+                    }
+                }catch (Exception e){
+                    logger.error("秒杀系统出错", e);
+                }
+                latch.countDown();
+            };
+            executor.execute(task);
+        }
+        try {
+            latch.await(); // 等待所有人任务结束
+
+            // 秒杀结束后，将Redis中秒杀信息写入到数据库中进行保存
+            secKillDistributeService.updateDateBaseFromRedis(gid);
+
+            long killedCount = secKillService.getKilledCount(gid);
+            logger.info("一共秒杀出{}件商品",killedCount);
+        } catch (Exception e) {
+            logger.error("秒杀系统出错", e);
+        }
+        return JsonRespDTO.success("秒杀系统正常");
+    }
 
 }
