@@ -166,9 +166,17 @@ BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设�
 
 1）搭建三主三从Cluster模式的Redis集群,配置Redisson
 
+2）搭建zookeeper集群,导入Curator依赖
 
-### 1. case1:基于Redisson的分布式锁，正常
+
+### 1. case1:基于Redisson的Redis分布式锁，正常
 
 接口：/seckillDistributed/handleWithRedisson?gid=1197
 
 注意要用Redis Lock把整个事务提交都包住。这里仅仅使用了Redis分布式提供的锁功能，秒杀数据处理还是直接访问数据库来完成
+
+### 2. case2:基于Curator的Zookeeper分布式锁，正常
+
+类似于之前使用BlockingQueue时编写了一个单例模式的工具类来全局使用的形式相同，这里也采用静态内部类形式的单例模式编写一个Curator框架的分布式锁功能工具类ZkLockUtil来实现全局调用
+
+注意这里也要用Zookeeper分布式锁把整个事务提交都包住。这里只用了zookeeper的分布式锁功能，秒杀数据处理也是直接访问数据库来完成

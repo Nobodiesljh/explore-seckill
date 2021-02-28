@@ -4,6 +4,7 @@ package cn.trajectories.babytun.service.impl;
 import cn.trajectories.babytun.dao.PromotionSecKillDao;
 import cn.trajectories.babytun.dao.SuccessKilledDao;
 import cn.trajectories.babytun.distributedlock.redis.RedissLockUtil;
+import cn.trajectories.babytun.distributedlock.zookeeper.ZkLockUtil;
 import cn.trajectories.babytun.entity.JsonRespDTO;
 import cn.trajectories.babytun.entity.SuccessKilled;
 import cn.trajectories.babytun.service.ISecKillDistributeService;
@@ -39,10 +40,10 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
         try {
             // 校验库存
             long psCount = promotionSecKillDao.selectCountByGoodsId(goodsId);
-            if(psCount > 0){
+            if (psCount > 0) {
                 // 1.扣库存
                 Map<String, Long> data = new HashMap<>();
-                data.put("psCount", psCount-1);
+                data.put("psCount", psCount - 1);
                 data.put("goodsId", goodsId);
                 promotionSecKillDao.reduceStockByGoodsId(data);
 
@@ -73,7 +74,7 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
         JsonRespDTO result = new JsonRespDTO();
         boolean flag = false;
         try {
-            flag = RedissLockUtil.tryLock(goodsId+"", TimeUnit.SECONDS, 3, 20);
+            flag = RedissLockUtil.tryLock(goodsId + "", TimeUnit.SECONDS, 3, 20);
             if (flag) {
                 result = this.handleWithOutLock(goodsId, userId);
             } else {
@@ -86,10 +87,33 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
         } finally {
             if (flag) {
                 // 释放锁
-                RedissLockUtil.unlock(goodsId+"");
+                RedissLockUtil.unlock(goodsId + "");
             }
         }
         return result;
     }
 
+    @Override
+    public JsonRespDTO handleWithZk(long goodsId, long userId) {
+        JsonRespDTO result = new JsonRespDTO();
+        boolean flag = false;
+        try {
+            flag = ZkLockUtil.acquire(3, TimeUnit.SECONDS);
+            if (flag) {
+                result = this.handleWithOutLock(goodsId, userId);
+            } else {
+                logger.error("没有成功加上Zookeeper锁");
+            }
+        } catch (Exception e) {
+            logger.error("秒杀异常", e);
+            result.setMessage("秒杀系统出现异常");
+            result.setStatus(JsonRespDTO.STATUS_ERROR);
+        } finally {
+            if (flag) {
+                // 释放锁
+                ZkLockUtil.release();
+            }
+        }
+        return result;
+    }
 }

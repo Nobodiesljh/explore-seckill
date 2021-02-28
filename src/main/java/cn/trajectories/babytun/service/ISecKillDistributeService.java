@@ -19,4 +19,12 @@ public interface ISecKillDistributeService {
      * @return
      */
     JsonRespDTO handleWithRedisson(long killId, long userId);
+
+    /**
+     * case2:Zookeeper分布式锁，正常
+     * @param killId
+     * @param userId
+     * @return
+     */
+    JsonRespDTO handleWithZk(long killId, long userId);
 }
