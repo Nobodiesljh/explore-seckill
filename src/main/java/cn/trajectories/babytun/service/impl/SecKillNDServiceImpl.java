@@ -94,6 +94,7 @@ public class SecKillNDServiceImpl implements ISecKillNDService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public JsonRespDTO handleSecKillWithLock(long goodsId, long userId) {
         // 这里注意要用锁把整个事务都包裹起来，不然会出现超卖现象
         // 小柒2012/spring-boot-seckill源代码中目前还没有做修改，会存在超卖

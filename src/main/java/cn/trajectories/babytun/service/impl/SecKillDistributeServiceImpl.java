@@ -118,6 +118,7 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public JsonRespDTO handleWithRedisson(long goodsId, long userId) {
         JsonRespDTO result = new JsonRespDTO();
         boolean flag = false;
@@ -142,6 +143,7 @@ public class SecKillDistributeServiceImpl implements ISecKillDistributeService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public JsonRespDTO handleWithZk(long goodsId, long userId) {
         JsonRespDTO result = new JsonRespDTO();
         boolean flag = false;

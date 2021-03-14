@@ -28,6 +28,8 @@
     + [4. case4:Redis原子递减,正常](#4-case4redis原子递减正常)
     + [5. 其他](#5-其他)
   * [五、秒杀系统性能提升](#五秒杀系统性能提升)
+  * [六、bugfix](#六bugfix)
+    + [1. Spring AOP自调用问题](#1-SpringAOP自调用问题)
 
 
 这里是个人尝试通过秒杀系统学习并发编程知识的一个小项目。希望能够对您有帮助。
@@ -252,3 +254,9 @@ BlockingQueue阻塞队列会被频繁的创建和消费，所以需要将其设�
 - CDN内容分发网络
 - 流量防刷和反爬虫
 - 等等
+
+## 六、bugfix
+
+### 1. Spring AOP自调用问题
+- 若同一个类中的其他没有``@Transactional``注解的方法内部调用有``@Transactional``注解的方法，有``@Transactional``注解的方法的事务会失效
+- 这里直接在外部的方法上添加了``@Transactional``注解。利用了Spring事务传播行为的特性
