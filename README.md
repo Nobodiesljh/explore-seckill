@@ -1,6 +1,7 @@
 # 初探并发编程：秒杀系统
 
 - [初探并发编程：秒杀系统](#-----------)
+  * [零、秒杀系统相关好文分享](#零秒杀系统相关好文分享)
   * [一、最原始网页](#一最原始网页)
     + [1. 开发环境](#1-开发环境)
     + [2. 部署环境](#2-部署环境)
@@ -43,6 +44,11 @@
 1）[spring-boot-seckill开源项目](https://gitee.com/52itstyle/spring-boot-seckill)
 
 2）[祁老师秒杀实战全套百度云:tz8v](https://pan.baidu.com/s/1XhHbPSLpoJYXx4WgkIlDzA)
+
+用Go语言重写项目地址：[https://github.com/Nobodiesljh/seckill-golang](https://github.com/Nobodiesljh/seckill-golang)
+
+## 零、秒杀系统相关好文分享
+1）[硬核讲解秒杀设计](https://mp.weixin.qq.com/s/rbXrhzIJG2NtYt_61OmzTA)
 
 ## 一、最原始网页
 
